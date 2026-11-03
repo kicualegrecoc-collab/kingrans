@@ -1,220 +1,206 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
+# Students Consultation Scheduler System
+# PHINMA Cagayan de Oro College
 
-# C extensions
-*.so
+import os
+from datetime import datetime
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+USERS = "users.txt"
+SCHEDULES = "schedules.txt"
+APPOINTMENTS = "appointments.txt"
 
-# PyInstaller
-#   Usually these files are written by a python script from a template
-#   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+def read_file(filename):
+    if not os.path.exists(filename):
+        open(filename, "w").close()
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py.cover
-*.lcov
-.hypothesis/
-.pytest_cache/
-cover/
+    with open(filename, "r") as file:
+        return [line.strip() for line in file if line.strip()]
 
-# Translations
-*.mo
-*.pot
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+def register():
+    name = input("Full Name: ")
+    username = input("Username: ")
+    password = input("Password: ")
+    role = input("Role (student/teacher): ").lower()
 
-# Flask stuff:
-instance/
-.webassets-cache
+    if role not in ["student", "teacher"]:
+        print("Invalid role!")
+        return
 
-# Scrapy stuff:
-.scrapy
+    users = read_file(USERS)
 
-# Sphinx documentation
-docs/_build/
+    if any(u.split("|")[1] == username for u in users):
+        print("Username already exists!")
+        return
 
-# PyBuilder
-.pybuilder/
-target/
+    with open(USERS, "a") as file:
+        file.write(f"{name}|{username}|{password}|{role}\n")
 
-# Jupyter Notebook
-.ipynb_checkpoints
+    print("Registration successful!")
 
-# IPython
-profile_default/
-ipython_config.py
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+def login():
+    username = input("Username: ")
+    password = input("Password: ")
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-# Pipfile.lock
+    for user in read_file(USERS):
+        name, user_name, user_pass, role = user.split("|")
 
-# uv
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-# uv.lock
+        if username == user_name and password == user_pass:
+            print(f"\nWelcome, {name}!")
+            if role == "teacher":
+                teacher_menu(username)
+            else:
+                student_menu(username)
+            return
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-# poetry.lock
-# poetry.toml
+    print("Invalid username or password!")
 
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
-#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
-# pdm.lock
-# pdm.toml
-.pdm-python
-.pdm-build/
 
-# pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
-# pixi.lock
-#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
-.pixi/*
-!.pixi/config.toml
+def teacher_menu(username):
+    while True:
+        print("\n=== TEACHER MENU ===")
+        print("1. Set Schedule")
+        print("2. View My Schedules")
+        print("3. View Appointments")
+        print("4. Logout")
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
+        choice = input("Choose: ")
 
-# Celery stuff
-celerybeat-schedule*
-celerybeat.pid
+        if choice == "1":
+            day = input("Day (Monday-Sunday): ").capitalize()
 
-# Redis
-*.rdb
-*.aof
-*.pid
+            if day not in [
+                "Monday", "Tuesday", "Wednesday", "Thursday",
+                "Friday", "Saturday", "Sunday"
+            ]:
+                print("Invalid day!")
+                continue
 
-# RabbitMQ
-mnesia/
-rabbitmq/
-rabbitmq-data/
+            start = input("Start Time (e.g. 8:00 AM): ")
+            end = input("End Time (e.g. 11:30 AM): ")
 
-# ActiveMQ
-activemq-data/
+            try:
+                start_time = datetime.strptime(start, "%I:%M %p")
+                end_time = datetime.strptime(end, "%I:%M %p")
 
-# SageMath parsed files
-*.sage.py
+                if start_time >= end_time:
+                    print("End time must be later than start time!")
+                    continue
+            except ValueError:
+                print("Invalid time format!")
+                continue
 
-# Environments
-.env
-.envrc
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+            with open(SCHEDULES, "a") as file:
+                file.write(f"{username}|{day}|{start}|{end}\n")
 
-# Spyder project settings
-.spyderproject
-.spyproject
+            print("Schedule added successfully!")
 
-# Rope project settings
-.ropeproject
+        elif choice == "2":
+            for s in read_file(SCHEDULES):
+                teacher, day, start, end = s.split("|")
+                if teacher == username:
+                    print(f"{day}: {start} - {end}")
 
-# mkdocs/Zensical documentation
-/site
+        elif choice == "3":
+            for a in read_file(APPOINTMENTS):
+                student, teacher, day, time, reason = a.split("|")
+                if teacher == username:
+                    print(
+                        f"Student: {student} | {day} at {time}"
+                        f" | Reason: {reason}"
+                    )
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+        elif choice == "4":
+            break
 
-# Pyre type checker
-.pyre/
+        else:
+            print("Invalid choice!")
 
-# pytype static type analyzer
-.pytype/
 
-# Cython debug symbols
-cython_debug/
+def student_menu(username):
+    while True:
+        print("\n=== STUDENT MENU ===")
+        print("1. View Available Schedules")
+        print("2. Book Consultation")
+        print("3. View My Appointments")
+        print("4. Logout")
 
-# PyCharm
-#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#   and can be added to the global gitignore or merged into this file.  For a more nuclear
-#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
+        choice = input("Choose: ")
 
-# Abstra
-#   Abstra is an AI-powered process automation framework.
-#   Ignore directories containing user credentials, local state, and settings.
-#   Learn more at https://abstra.io/docs
-.abstra/
+        if choice == "1":
+            for s in read_file(SCHEDULES):
+                teacher, day, start, end = s.split("|")
+                print(f"Teacher: {teacher} | {day}: {start} - {end}")
 
-# Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore that
-#   can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, you
-#   could uncomment the following to ignore the entire vscode folder
-# .vscode/
-# Temporary file for partial code execution
-tempCodeRunnerFile.py
+        elif choice == "2":
+            schedules = read_file(SCHEDULES)
 
-# Ruff stuff:
-.ruff_cache/
+            if not schedules:
+                print("No schedules available.")
+                continue
 
-# PyPI configuration file
-.pypirc
+            teacher = input("Teacher Username: ")
+            day = input("Day: ").capitalize()
+            time = input("Consultation Time (e.g. 9:00 AM): ")
+            reason = input("Reason for consultation: ")
 
-# Marimo
-marimo/_static/
-marimo/_lsp/
-__marimo__/
+            available = False
 
-# Streamlit
-.streamlit/secrets.toml
+            for s in schedules:
+                t, d, start, end = s.split("|")
+
+                if t == teacher and d == day:
+                    try:
+                        chosen = datetime.strptime(time, "%I:%M %p")
+                        start_time = datetime.strptime(start, "%I:%M %p")
+                        end_time = datetime.strptime(end, "%I:%M %p")
+
+                        if start_time <= chosen < end_time:
+                            available = True
+                    except ValueError:
+                        pass
+
+            if available:
+                with open(APPOINTMENTS, "a") as file:
+                    file.write(
+                        f"{username}|{teacher}|{day}|{time}|{reason}\n"
+                    )
+                print("Consultation booked successfully!")
+            else:
+                print("Invalid teacher, day, or time.")
+
+        elif choice == "3":
+            for a in read_file(APPOINTMENTS):
+                student, teacher, day, time, reason = a.split("|")
+                if student == username:
+                    print(
+                        f"Teacher: {teacher} | {day} at {time}"
+                        f" | Reason: {reason}"
+                    )
+
+        elif choice == "4":
+            break
+
+        else:
+            print("Invalid choice!")
+
+
+# MAIN PROGRAM
+while True:
+    print("\n=== CONSULTATION SCHEDULER ===")
+    print("1. Register")
+    print("2. Login")
+    print("3. Exit")
+
+    choice = input("Choose: ")
+
+    if choice == "1":
+        register()
+    elif choice == "2":
+        login()
+    elif choice == "3":
+        print("Thank you for using the system!")
+        break
+    else:
+        print("Invalid choice!")
